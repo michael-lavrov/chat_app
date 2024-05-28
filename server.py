@@ -5,7 +5,7 @@ EMPTY_STR = ''
 MSG_MAX_LEN = 2048
 CODING_STANDARD = 'utf-8'
 
-HOST = '127.0.0.1'
+HOST = '0.0.0.0'
 PORT = 1234
 LISTENERS_LIMIT = 5
 
@@ -85,6 +85,7 @@ def main():
         print(f"Running the server on {HOST} {PORT}")
     except:
         print(f"Unable to connect to host: {HOST}, at port: {PORT}")
+        exit(0)
 
     server.listen(LISTENERS_LIMIT)
 

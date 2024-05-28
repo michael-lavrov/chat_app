@@ -5,12 +5,17 @@ EMPTY_STR = ''
 MSG_MAX_LEN = 2048
 CODING_STANDARD = 'utf-8'
 
-HOST = '127.0.0.1'
+# Enter the IP of the server
+HOST = '192.168.68.105'
 PORT = 1234
 
 
 def listen_for_messages_from_server(client):
-
+    """
+    A function that runs in another thread, receives messages from the server
+    :param client: The client socket object
+    :return: None
+    """
     while True:
         message = client.recv(MSG_MAX_LEN).decode(CODING_STANDARD)
         if message != EMPTY_STR:
@@ -27,7 +32,11 @@ def listen_for_messages_from_server(client):
 
 
 def send_msg_to_server(client):
-
+    """
+    Sending messages to the server
+    :param client: The client socket object
+    :return: None
+    """
     while True:
 
         message = input("Message: ")
@@ -39,24 +48,29 @@ def send_msg_to_server(client):
 
 
 def communicate_to_server(client):
-
-    #TODO: Add an option to retry entering the username
+    """
+    Responsible to initiate and maintain communication with the server
+    :param client: The client socket object
+    :return:
+    """
 
     # Sending the username to the server
-    username = input("Choose a username: ")
-    #TODO: Username cannot containt '~'
-    if username != EMPTY_STR:
-        client.sendall(username.encode())
-    else:
-        print("Username cannot be empty")
-        exit(0)
+    while True:
+        username = input("Choose a username: ")
+        if username == EMPTY_STR:
+            print("Username cannot be empty")
+        elif '~' in username:
+            print("Username cannot contain '~'")
+        else:
+            break
 
-    threading.Thread(target=listen_for_messages_from_server, args=(client, )).start()
+    client.sendall(username.encode())
+    threading.Thread(target=listen_for_messages_from_server, args=(client,)).start()
     send_msg_to_server(client)
+
 
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
     try:
         client.connect((HOST, PORT))
         print("Successfully connected to server")
@@ -66,7 +80,5 @@ def main():
     communicate_to_server(client)
 
 
-
 if __name__ == '__main__':
     main()
-
