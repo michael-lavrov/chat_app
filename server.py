@@ -5,12 +5,19 @@ EMPTY_STR = ''
 MSG_MAX_LEN = 2048
 CODING_STANDARD = 'utf-8'
 
+#TODO: Add text when client leaves the chat, remove him from dictionary
+
 HOST = '0.0.0.0'
 PORT = 1234
 LISTENERS_LIMIT = 5
 
 active_users = {}
 
+
+def make_prompt_msg(username, content):
+    sep_ind = len(username)
+    final_msg = f"{sep_ind}~{username}~{content}"
+    return final_msg
 
 def listen_for_messages(username):
     """
@@ -22,7 +29,7 @@ def listen_for_messages(username):
 
         message = active_users[username].recv(MSG_MAX_LEN).decode(CODING_STANDARD)
         if message != EMPTY_STR:
-            final_msg = username + '~' + message
+            final_msg = make_prompt_msg(username, message)
             send_msg_to_all(final_msg)
         else:
             print(f"The message sent from client {username} is empty")
@@ -35,17 +42,17 @@ def send_msg_to_all(message):
     :return: None
     """
     for user in active_users:
-        send_msg_to_single_client(active_users[user], message)
+        send_msg_to_single_client(user, message)
 
 
-def send_msg_to_single_client(client, message):
+def send_msg_to_single_client(username, message):
     """
     Sends message to a single client
-    :param client: The client socket object
+    :param username: The username of the client
     :param message: The message to be sent
     :return: None
     """
-    client.sendall(message.encode())
+    active_users[username].sendall(message.encode())
 
 
 def client_handler(client):
@@ -64,7 +71,7 @@ def client_handler(client):
             if username not in active_users:
                 # Adding username to active users dict
                 active_users[username] = client
-                prompt_msg = "SERVER" + '~' + f"{username} has joined the chat"
+                prompt_msg = make_prompt_msg("SERVER", f"{username} has joined the chat")
                 send_msg_to_all(prompt_msg)
                 listen_for_messages(username)
                 break

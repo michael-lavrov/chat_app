@@ -4,9 +4,10 @@ import threading
 EMPTY_STR = ''
 MSG_MAX_LEN = 2048
 CODING_STANDARD = 'utf-8'
+EMPTY_MSG_STR = "Message is empty"
 
 # Enter the IP of the server
-HOST = '192.168.68.105'
+HOST = '127.0.0.1'
 PORT = 1234
 
 
@@ -19,16 +20,14 @@ def listen_for_messages_from_server(client):
     while True:
         message = client.recv(MSG_MAX_LEN).decode(CODING_STANDARD)
         if message != EMPTY_STR:
-            split_msg = message.split('~')
-            username = split_msg[0]
-            content = EMPTY_STR
-            for i in range(1, len(split_msg)):
-                content += split_msg[i]
-
+            sep_ind = int(message[:message.find('~')])
+            message = message[len(str(sep_ind))+1:]
+            username = message[:sep_ind]
+            content = message[sep_ind+1:]
             print(f"[{username}] {content}")
 
         else:
-            print("Message is empty")
+            print(EMPTY_MSG_STR)
 
 
 def send_msg_to_server(client):
@@ -39,12 +38,11 @@ def send_msg_to_server(client):
     """
     while True:
 
-        message = input("Message: ")
+        message = input()
         if message != EMPTY_STR:
             client.sendall(message.encode())
         else:
-            print("Message is empty")
-            exit(0)
+            print(EMPTY_MSG_STR)
 
 
 def communicate_to_server(client):
@@ -59,8 +57,6 @@ def communicate_to_server(client):
         username = input("Choose a username: ")
         if username == EMPTY_STR:
             print("Username cannot be empty")
-        elif '~' in username:
-            print("Username cannot contain '~'")
         else:
             break
 
