@@ -1,10 +1,13 @@
 import socket
 import threading
+import time
 
 EMPTY_STR = ''
 MSG_MAX_LEN = 2048
 CODING_STANDARD = 'utf-8'
 EMPTY_MSG_STR = "Message is empty"
+SLEEP_INTERVAL = 1
+HEARTBEAT_MSG = "HEARTBEAT_MESSAGE"
 
 # Enter the IP of the server
 HOST = '127.0.0.1'
@@ -30,6 +33,7 @@ def listen_for_messages_from_server(client):
             print(EMPTY_MSG_STR)
 
 
+
 def send_msg_to_server(client):
     """
     Sending messages to the server
@@ -43,6 +47,17 @@ def send_msg_to_server(client):
             client.sendall(message.encode())
         else:
             print(EMPTY_MSG_STR)
+
+def send_heartbeat(client):
+    """
+    Sends a heartbeat message to the server every SLEEP_INTERVAL seconds to signal that the client is
+    still connected
+    :param client: The client socket object
+    :return: None
+    """
+    while True:
+        client.sendall(HEARTBEAT_MSG.encode())
+        time.sleep(SLEEP_INTERVAL)
 
 
 def communicate_to_server(client):
@@ -61,6 +76,7 @@ def communicate_to_server(client):
             break
 
     client.sendall(username.encode())
+    threading.Thread(target=send_heartbeat, args=(client,)).start()
     threading.Thread(target=listen_for_messages_from_server, args=(client,)).start()
     send_msg_to_server(client)
 
