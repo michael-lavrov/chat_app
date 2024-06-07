@@ -6,8 +6,9 @@ EMPTY_STR = ''
 MSG_MAX_LEN = 2048
 CODING_STANDARD = 'utf-8'
 EMPTY_MSG_STR = "Message is empty"
-SLEEP_INTERVAL = 1
+SLEEP_INTERVAL = 3
 HEARTBEAT_MSG = "HEARTBEAT_MESSAGE"
+
 
 # Enter the IP of the server
 HOST = '127.0.0.1'
@@ -23,15 +24,25 @@ def listen_for_messages_from_server(client):
     while True:
         message = client.recv(MSG_MAX_LEN).decode(CODING_STANDARD)
         if message != EMPTY_STR:
-            sep_ind = int(message[:message.find('~')])
-            message = message[len(str(sep_ind))+1:]
-            username = message[:sep_ind]
-            content = message[sep_ind+1:]
+            content, username = decode_message(message)
             print(f"[{username}] {content}")
 
         else:
             print(EMPTY_MSG_STR)
 
+
+def decode_message(message):
+    """
+    Decodes message that is sent from the server, gives back the username and the content of the message
+    :param message:  string
+    :return: content, username
+    """
+
+    sep_ind = int(message[:message.find('~')])
+    message = message[len(str(sep_ind)) + 1:]
+    username = message[:sep_ind]
+    content = message[sep_ind + 1:]
+    return content, username
 
 
 def send_msg_to_server(client):
@@ -70,12 +81,23 @@ def communicate_to_server(client):
     # Sending the username to the server
     while True:
         username = input("Choose a username: ")
+
         if username == EMPTY_STR:
-            print("Username cannot be empty")
-        else:
+            print("ERROR: username cannot be an empty string")
+            continue
+
+        client.sendall(username.encode())
+        while True:
+            response = client.recv(MSG_MAX_LEN).decode(CODING_STANDARD)
             break
 
-    client.sendall(username.encode())
+        content, _ = decode_message(response)
+        if content.startswith("ERROR"):
+            print(content)
+        else:
+            print(content)
+            break
+
     threading.Thread(target=send_heartbeat, args=(client,)).start()
     threading.Thread(target=listen_for_messages_from_server, args=(client,)).start()
     send_msg_to_server(client)

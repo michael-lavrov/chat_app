@@ -7,9 +7,8 @@ EMPTY_STR = ''
 MSG_MAX_LEN = 2048
 CODING_STANDARD = 'utf-8'
 HEARTBEAT_MSG = "HEARTBEAT_MESSAGE"
-HEARTBEAT_INTERVAL = 2
+HEARTBEAT_INTERVAL = 5
 
-#TODO: Check what happens when a client tries to enter a name that is already taken
 
 HOST = '0.0.0.0'
 PORT = 1234
@@ -18,6 +17,8 @@ LISTENERS_LIMIT = 5
 active_users = {}
 heartbeats = {}
 
+#TODO: Check why still getting heartbeats in pycharm
+#TODO: Check what to do with exceptions
 
 @dataclass
 class Client:
@@ -74,6 +75,7 @@ def listen_for_messages(username):
 
         if message != EMPTY_STR:
             if message == HEARTBEAT_MSG:
+                print("Got heartbeat")
                 active_users[username].last_hb_time = time.time()
             else:
                 final_msg = make_prompt_msg(username, message)
@@ -113,18 +115,17 @@ def client_handler(client_socket):
         # Receiving username from the client
         username = client_socket.recv(MSG_MAX_LEN).decode(CODING_STANDARD)
 
-        if username != EMPTY_STR:
-
-            if username not in active_users:
-                # Adding username to active users dict
-                prompt_msg = make_prompt_msg("SERVER", f"{username} has joined the chat")
-                send_msg_to_all(prompt_msg)
-                # listen_for_messages(username)
-                break
-            else:
-                print(f"{username} is already taken")
+        if username not in active_users:
+            # Adding username to active users dict
+            prompt_msg = make_prompt_msg("SERVER", f"{username} has joined the chat")
+            send_msg_to_all(prompt_msg)
+            break
         else:
-            print("Username is an empty string")
+            error_msg = make_prompt_msg("SERVER", f"ERROR: {username} is already taken")
+            client_socket.sendall(error_msg.encode())
+
+    success_msg = make_prompt_msg("SERVER", "Connection was successful")
+    client_socket.sendall(success_msg.encode())
     # Creating a thread to listen to user messages
     thread = threading.Thread(target=listen_for_messages, args=(username, ))
     client = Client(username=username, client_socket=client_socket, last_hb_time=time.time(), thread=thread)
