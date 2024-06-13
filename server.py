@@ -17,8 +17,6 @@ LISTENERS_LIMIT = 5
 active_users = {}
 heartbeats = {}
 
-#TODO: Check why still getting heartbeats in pycharm
-#TODO: Check what to do with exceptions
 
 @dataclass
 class Client:
@@ -71,18 +69,21 @@ def listen_for_messages(username):
     active_users[username].last_hb_time = time.time()
     while True:
 
-        message = active_users[username].client_socket.recv(MSG_MAX_LEN).decode(CODING_STANDARD)
+        try:
+            message = active_users[username].client_socket.recv(MSG_MAX_LEN).decode(CODING_STANDARD)
 
-        if message != EMPTY_STR:
-            if message == HEARTBEAT_MSG:
-                print("Got heartbeat")
-                active_users[username].last_hb_time = time.time()
+            if message != EMPTY_STR:
+                if message == HEARTBEAT_MSG:
+                    active_users[username].last_hb_time = time.time()
+                else:
+                    final_msg = make_prompt_msg(username, message)
+                    send_msg_to_all(final_msg)
             else:
-                final_msg = make_prompt_msg(username, message)
-                send_msg_to_all(final_msg)
-        else:
-            print(f"The message sent from client {username} is empty")
+                print(f"The message sent from client {username} is empty")
 
+        except Exception as e:
+            print(f"Exception in listening to user {username}: {e}")
+            break
 
 def send_msg_to_all(message):
     """
@@ -139,8 +140,8 @@ def main():
     try:
         server.bind((HOST, PORT))
         print(f"Running the server on {HOST} {PORT}")
-    except:
-        print(f"Unable to connect to host: {HOST}, at port: {PORT}")
+    except Exception as e:
+        print(f"Unable to bind {(HOST, PORT)}: {e}")
         exit(0)
 
     server.listen(LISTENERS_LIMIT)
