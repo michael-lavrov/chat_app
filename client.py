@@ -1,6 +1,7 @@
 import socket
 import threading
 import time
+import sys
 
 EMPTY_STR = ''
 MSG_MAX_LEN = 2048
@@ -11,7 +12,7 @@ HEARTBEAT_MSG = "HEARTBEAT_MESSAGE"
 
 
 # Enter the IP of the server
-HOST = '127.0.0.1'
+HOST = '10.100.10.42'
 PORT = 1234
 
 
@@ -104,12 +105,19 @@ def communicate_to_server(client):
 
 
 def main():
+    if len(sys.argv) < 3:
+        print("Error: HOST, PORT arguments were not provided")
+        exit(1)
+
+    host, port = sys.argv[1], int(sys.argv[2])
+
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        client.connect((HOST, PORT))
+        client.connect((host, port))
         print("Successfully connected to server")
-    except:
-        print(f"Unable to connect to server {HOST}, at port {PORT}")
+    except Exception as e:
+        print(f"Unable to connect to server {host}, at port {port}: {e}")
+        exit(0)
 
     communicate_to_server(client)
 
